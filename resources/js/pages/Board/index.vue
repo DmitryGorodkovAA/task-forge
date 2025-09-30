@@ -1,9 +1,9 @@
 <template>
-    <div class="flex h-[calc(100vh-100px)] bg-red-300">
+    <div v-bind:class="componentsStyle.mainContainer.styleClasses">
         <div class="flex max-h-screen w-[15%] max-w-[250px] min-w-[150px] flex-col items-center overflow-auto bg-gray-300">
             <div class="w-full p-1" v-for="board in props.boards" :key="board.id">
                 <div class="w-full cursor-pointer rounded-2xl border-3 bg-white p-4 shadow-lg dark:bg-gray-800" :style="{ borderColor: board.color }">
-                    <a :href="route('boards.index', board.id)">
+                    <Link :href="route('boards.index', board.id)">
                         <div class="mb-2 flex items-center justify-between">
                             <span class="inline-block h-3 w-3 rounded-full" :style="{ backgroundColor: board.color }"></span>
                         </div>
@@ -15,7 +15,11 @@
                         <p class="line-clamp-3 text-sm text-gray-600 dark:text-gray-400">
                             {{ board.description }}
                         </p>
-                    </a>
+                    </Link>
+
+                    <!--                    <a :href="route('boards.index', board.id)">-->
+                    <!--                        -->
+                    <!--                    </a>-->
                 </div>
             </div>
             <button
@@ -111,6 +115,7 @@
                             </div>
                             <div class="ml-6 h-6 w-px bg-gray-300"></div>
                             <button
+                                @click="toggleCreateNewTaskForm"
                                 type="button"
                                 class="ml-6 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >
@@ -171,21 +176,147 @@
             </div>
         </div>
     </div>
+
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" v-bind:style="{ visibility: componentsStyle.newTaskForm.visibility }">
+
+        <div class="mx-auto max-w-2xl rounded-2xl border border-gray-100 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-800">Создать задачу</h3>
+                <button
+                    class="inline-flex items-center gap-2 rounded-2xl bg-sky-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-800 focus:ring-2 focus:ring-sky-300 focus:outline-none"
+                    @click="toggleCreateNewTaskForm"
+                    type="button"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Скрыть
+                </button>
+            </div>
+
+            <form @submit.prevent="submitCreateTaskForm" class="mt-5">
+                <div class="grid grid-cols-1 gap-4">
+                    <label class="flex flex-col">
+                        <span class="mb-1 text-sm font-medium text-gray-700">Название <span class="text-red-500">*</span></span>
+                        <input
+                            v-model="taskForm.name"
+                            type="text"
+                            placeholder="Например: Подготовить отчёт"
+                            class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-800 placeholder-gray-400 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                            :class="{ 'border-red-300 ring-2 ring-red-200': taskForm.errors && taskForm.errors.name }"
+                            aria-invalid="taskForm.errors && taskForm.errors.name ? 'true' : 'false'"
+                        />
+                        <p v-if="taskForm.errors && taskForm.errors.name" class="mt-1 text-xs text-red-600">
+                            {{ taskForm.errors.name[0] }}
+                        </p>
+                    </label>
+
+                    <label class="flex flex-col">
+                        <span class="mb-1 text-sm font-medium text-gray-700">Описание</span>
+                        <input
+                            v-model="taskForm.description"
+                            type="text"
+                            placeholder="Короткое описание (необязательно)"
+                            class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-800 placeholder-gray-400 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                            :class="{ 'border-red-300 ring-2 ring-red-200': taskForm.errors && taskForm.errors.description }"
+                        />
+                        <p v-if="taskForm.errors && taskForm.errors.description" class="mt-1 text-xs text-red-600">
+                            {{ taskForm.errors.description[0] }}
+                        </p>
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="flex flex-col">
+                            <span class="mb-1 text-sm font-medium text-gray-700">Срок</span>
+                            <input
+                                v-model="taskForm.due_date"
+                                type="date"
+                                class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-800 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                                :class="{ 'border-red-300 ring-2 ring-red-200': taskForm.errors && taskForm.errors.due_date }"
+                            />
+                            <p v-if="taskForm.errors && taskForm.errors.due_date" class="mt-1 text-xs text-red-600">
+                                {{ taskForm.errors.due_date[0] }}
+                            </p>
+                        </label>
+
+                        <label class="flex flex-col">
+                            <span class="mb-1 text-sm font-medium text-gray-700">Доска <span class="text-red-500">*</span></span>
+                            <select
+                                v-model.number="taskForm.board_id"
+                                class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-800 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                                :class="{ 'border-red-300 ring-2 ring-red-200': taskForm.errors && taskForm.errors.board_id }"
+                            >
+                                <option disabled value="">Выберите доску</option>
+                                <option v-for="board in props.boards" :key="board.id" :value="board.id">
+                                    {{ board.name }}
+                                </option>
+                            </select>
+                            <p v-if="taskForm.errors && taskForm.errors.board_id" class="mt-1 text-xs text-red-600">
+                                {{ taskForm.errors.board_id[0] }}
+                            </p>
+                        </label>
+                    </div>
+
+                    <div
+                        v-if="
+                            taskForm.errors &&
+                            Object.keys(taskForm.errors).length &&
+                            !taskForm.errors.name &&
+                            !taskForm.errors.description &&
+                            !taskForm.errors.due_date &&
+                            !taskForm.errors.board_id
+                        "
+                        class="rounded-md border border-red-100 bg-red-50 p-3 text-sm text-red-700"
+                    >
+                        Произошла ошибка. Пожалуйста, проверьте введённые данные.
+                    </div>
+
+                    <div class="mt-2 flex items-center justify-between gap-3">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-sky-600 to-sky-500 px-4 py-2 text-white shadow hover:from-sky-700 hover:to-sky-600 focus:ring-2 focus:ring-sky-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                            :disabled="taskForm.processing"
+                        >
+                            <svg
+                                v-if="taskForm.processing"
+                                class="h-4 w-4 animate-spin"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
+                            <span>{{ taskForm.processing ? 'Создаётся...' : 'Создать' }}</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="
+                                () => {
+                                    taskForm.reset('name', 'description', 'due_date');
+                                    taskForm.board_id = props.selectedBoard ? props.selectedBoard.id : '';
+                                }
+                            "
+                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                            Очистить
+                        </button>
+
+                        <p class="ml-auto text-xs text-gray-500">Поля с <span class="text-red-500">*</span> обязательны</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
 import Calendar from '@/components/mainComponents/Calendar.vue';
 import MainLayout from '@/layouts/MainLayout.vue';
+import { Link, useForm } from '@inertiajs/vue3';
+import { onMounted, reactive, ref } from 'vue';
 import { route } from 'ziggy-js';
-
-const date = new Date();
-
-defineOptions({
-    layout: MainLayout,
-});
-
-const isDark = ref(document.documentElement.classList.contains('dark'));
 
 const props = defineProps({
     boards: {
@@ -196,13 +327,36 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    selectedBoard: {
+        type: Object,
+        required: true,
+    },
 });
 
-console.log(props.boards);
+const taskForm = useForm({
+    name: null,
+    description: null,
+    due_date: null,
+    board_id: props.selectedBoard.id,
+});
+
+const date = new Date();
+
+defineOptions({
+    layout: MainLayout,
+});
+
+const isDark = ref(document.documentElement.classList.contains('dark'));
 
 const componentsStyle = reactive({
     dateSelectorMenu: {
         visibility: 'hidden',
+    },
+    newTaskForm: {
+        visibility: 'hidden',
+    },
+    mainContainer: {
+        styleClasses: 'flex h-[calc(100vh-100px)] bg-red-300',
     },
 });
 
@@ -213,6 +367,16 @@ const currentYear = ref(date.getFullYear());
 
 function toggleDataSelectMenu() {
     componentsStyle.dateSelectorMenu.visibility = componentsStyle.dateSelectorMenu.visibility === 'visible' ? 'hidden' : 'visible';
+}
+
+function toggleCreateNewTaskForm() {
+    if (componentsStyle.newTaskForm.visibility === 'visible') {
+        componentsStyle.newTaskForm.visibility = 'hidden';
+        componentsStyle.mainContainer.styleClasses = 'flex h-[calc(100vh-100px)] bg-red-300';
+    } else {
+        componentsStyle.newTaskForm.visibility = 'visible';
+        componentsStyle.mainContainer.styleClasses = 'blur flex h-[calc(100vh-100px)] bg-red-300';
+    }
 }
 
 function nextMonth() {
@@ -241,4 +405,19 @@ onMounted(() => {
         isDark.value = savedTheme === 'dark';
     }
 });
+
+function submitCreateTaskForm() {
+    taskForm.post(route('tasks.store'), {
+        onSuccess: () => {
+            taskForm.reset();
+            taskForm.board_id = props.selectedBoard.id;
+            console.log('симс гууд');
+
+            toggleCreateNewTaskForm();
+        },
+        onError: (errors) => {
+            console.log('errors: ', errors);
+        },
+    });
+}
 </script>
