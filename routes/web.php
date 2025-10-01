@@ -9,6 +9,7 @@ Route::get('/board/{id}', [\App\Http\Controllers\BoardController::class, 'index'
     ->name('boards.index');
 
 Route::post('/task', [\App\Http\Controllers\TaskController::class, 'store'])->name('tasks.store');
+Route::post('/boards', [\App\Http\Controllers\BoardController::class, 'store'])->name('boards.store');
 
 Route::get('/test', function () {
     return Inertia::render('test');

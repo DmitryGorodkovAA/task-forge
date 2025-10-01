@@ -1,9 +1,9 @@
 <template>
-    <div class="ring-opacity-5 shadow ring-1 ring-black flex flex-col w-full h-full">
+    <div class="h-max-[100vh] overflow-y-auto ring-opacity-5 shadow ring-1 ring-black flex flex-col">
         <div class="grid grid-cols-7 gap-px border-b border-gray-300 bg-gray-200 text-center text-xs leading-6 font-semibold text-gray-700 lg:flex-none">
             <div v-for="(day, index) in weekDays" :key="index" class="flex justify-center bg-white py-2">
                 <span>{{ day[0] }}</span>
-                <span class="sr-only sm:not-sr-only">{{ day.slice(1) }}</span>
+
             </div>
         </div>
 
@@ -13,14 +13,14 @@
                     v-for="day in calendarDays"
                     :key="day.dateString"
                     :class="dayClass(day)"
-                    class="relative h-[8rem] px-3 py-2 "
+                    class="relative px-3 py-2 "
                 >
                     <time :datetime="day.dateString" :class="timeClass(day)">{{ day.day }}</time>
-                    <div class="overflow-auto max-h-[6rem] mb-1">
+                    <div class="overflow-auto h-[12vh] mb-1">
                         <ol v-if="day.events.length" class="mt-2">
                             <li v-for="(event, idx) in day.events" :key="idx">
                                 <a href="#" class="group flex">
-                                    <p class="flex-auto truncate font-medium text-gray-900 group-hover:text-indigo-600">{{ event.name }}</p>
+                                    <p class="flex-auto font-medium text-gray-900 group-hover:text-indigo-600 line-clamp-3">{{ event.name }}</p>
                                     <time
                                         :datetime="event.due_date"
                                         class="ml-3 hidden flex-none text-gray-500 group-hover:text-indigo-600 xl:block"

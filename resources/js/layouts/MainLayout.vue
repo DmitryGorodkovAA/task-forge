@@ -19,6 +19,12 @@
     <div>
         <slot></slot>
     </div>
+<!--    <footer class="h-[200px] flex items-center justify-between">-->
+<!--        <h1 class="mx-2 text-lg">Проверка 1</h1>-->
+<!--        <h1 class="mx-2 text-lg">Проверка 2</h1>-->
+<!--        <h1 class="mx-2 text-lg">Проверка 3</h1>-->
+<!--        <h1 class="mx-2 text-lg">Проверка 4</h1>-->
+<!--    </footer>-->
 </template>
 
 <script setup lang="ts">

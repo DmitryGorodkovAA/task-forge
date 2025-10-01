@@ -1,6 +1,6 @@
 <template>
     <div v-bind:class="componentsStyle.mainContainer.styleClasses">
-        <div class="flex max-h-screen w-[15%] max-w-[250px] min-w-[150px] flex-col items-center overflow-auto bg-gray-300">
+        <div class="flex w-[15%] max-w-[250px] min-w-[150px] flex-col items-center overflow-auto bg-gray-300">
             <div class="w-full p-1" v-for="board in props.boards" :key="board.id">
                 <div class="w-full cursor-pointer rounded-2xl border-3 bg-white p-4 shadow-lg dark:bg-gray-800" :style="{ borderColor: board.color }">
                     <Link :href="route('boards.index', board.id)">
@@ -23,6 +23,7 @@
                 </div>
             </div>
             <button
+                @click="toggleCreateNewBoardForm"
                 class="max-w-[80%] transform rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 font-semibold text-white shadow-lg transition duration-300 ease-in-out hover:scale-105 hover:brightness-110 dark:from-blue-600 dark:to-purple-700 dark:focus:ring-blue-500"
             >
                 Создать доску
@@ -119,7 +120,7 @@
                                 type="button"
                                 class="ml-6 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >
-                                Add event
+                                Создать таску
                             </button>
                         </div>
                         <div class="relative ml-6 md:hidden">
@@ -178,7 +179,6 @@
     </div>
 
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" v-bind:style="{ visibility: componentsStyle.newTaskForm.visibility }">
-
         <div class="mx-auto max-w-2xl rounded-2xl border border-gray-100 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-800">Создать задачу</h3>
@@ -309,6 +309,118 @@
             </form>
         </div>
     </div>
+
+    <div
+        class="-translate-y1/2 absolute top-1/2 left-1/2 -translate-x-1/2"
+        :style="{ visibility: componentsStyle.newBoardForm.visibility }"
+    >
+        <div class="mx-auto max-w-2xl min-w-[500px] rounded-2xl border border-gray-100 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-800">Создать доску</h3>
+                <button
+                    class="inline-flex items-center gap-2 rounded-2xl bg-sky-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-800 focus:ring-2 focus:ring-sky-300 focus:outline-none"
+                    @click="toggleCreateNewBoardForm"
+                    type="button"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Скрыть
+                </button>
+            </div>
+        <form @submit.prevent="submitCreateBoardForm" class="mt-5">
+            <div class="grid grid-cols-1 gap-4">
+                <label class="flex flex-col">
+                    <span class="mb-1 text-sm font-medium text-gray-700">Название <span class="text-red-500">*</span></span>
+                    <input
+                        v-model="boardForm.name"
+                        type="text"
+                        placeholder="Например: Работа"
+                        class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-800 placeholder-gray-400 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                        :class="{ 'border-red-300 ring-2 ring-red-200': boardForm.errors && boardForm.errors.name }"
+                        aria-invalid="boardForm.errors && boardForm.errors.name ? 'true' : 'false'"
+                    />
+                    <p v-if="taskForm.errors && taskForm.errors.name" class="mt-1 text-xs text-red-600">
+                        {{ taskForm.errors.name[0] }}
+                    </p>
+                </label>
+                <label class="flex flex-col">
+                    <span class="mb-1 text-sm font-medium text-gray-700">Описание <span class="text-red-500">*</span></span>
+                    <input
+                        v-model="boardForm.description"
+                        type="text"
+                        placeholder="Например: Отмечаю тут задачи по работе"
+                        class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-800 placeholder-gray-400 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                        :class="{ 'border-red-300 ring-2 ring-red-200': boardForm.errors && boardForm.errors.description }"
+                        aria-invalid="boardForm.errors && boardForm.errors.description ? 'true' : 'false'"
+                    />
+                    <p v-if="boardForm.errors && boardForm.errors.description" class="mt-1 text-xs text-red-600">
+                        {{ taskForm.errors.description[0] }}
+                    </p>
+                </label>
+
+                <label class="flex flex-col">
+                    <span class="mb-1 text-sm font-medium text-gray-700">Цвет доски<span class="text-red-500"></span></span>
+
+                    <input
+                        v-model="boardForm.color"
+                        type="color"
+                        class="h-10 w-10 cursor-pointer rounded-full border-0 p-0"
+                        aria-label="Выберите цвет доски"
+                    />
+                </label>
+
+                <div
+                    v-if="
+                            boardForm.errors &&
+                            Object.keys(boardForm.errors).length &&
+                            !taskForm.errors.name &&
+                            !taskForm.errors.description &&
+                            !taskForm.errors.color
+                        "
+                    class="rounded-md border border-red-100 bg-red-50 p-3 text-sm text-red-700"
+                >
+                    Произошла ошибка. Пожалуйста, проверьте введённые данные.
+                </div>
+
+                <div class="mt-2 flex items-center justify-between gap-3">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-sky-600 to-sky-500 px-4 py-2 text-white shadow hover:from-sky-700 hover:to-sky-600 focus:ring-2 focus:ring-sky-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="boardForm.processing"
+                    >
+                        <svg
+                            v-if="boardForm.processing"
+                            class="h-4 w-4 animate-spin"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        <span>{{ boardForm.processing ? 'Создаётся...' : 'Создать' }}</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        @click="
+                                () => {
+                                    boardForm.reset();
+                                    boardForm.color = randomFromPalette();
+                                }
+                            "
+                        class="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                        Очистить
+                    </button>
+
+                    <p class="ml-auto text-xs text-gray-500">Поля с <span class="text-red-500">*</span> обязательны</p>
+                </div>
+            </div>
+        </form>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -317,6 +429,9 @@ import MainLayout from '@/layouts/MainLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { onMounted, reactive, ref } from 'vue';
 import { route } from 'ziggy-js';
+
+const defaultMainContainerStyle = 'flex overflow-scroll h-[100vh] bg-red-300';
+const blurMainContainerStyle = 'blur flex overflow-scroll h-[100vh] bg-red-300';
 
 const props = defineProps({
     boards: {
@@ -339,6 +454,29 @@ const taskForm = useForm({
     due_date: null,
     board_id: props.selectedBoard.id,
 });
+const nicePalette = [
+    '#ff6b6b', '#ff8a80', '#ff5252', '#ff1744',
+    '#ff9f43', '#ffb74d', '#ff9800', '#ff6d00',
+    '#ffd54f', '#ffeb3b', '#fff176', '#ffea00',
+    '#fdd835', '#cddc39', '#d4e157', '#aed581',
+    '#8bc34a', '#7cb342', '#4caf50', '#2e7d32',
+    '#00d2d3', '#00bcd4', '#0097a7', '#006064',
+    '#48dbfb', '#18ffff', '#00e5ff', '#00b8d4',
+    '#54a0ff', '#4285f4', '#2979ff', '#1565c0',
+    '#5f27cd', '#673ab7', '#7e57c2', '#512da8',
+    '#f06292', '#ec407a', '#e91e63', '#ad1457',
+    '#ffccbc', '#ffab91', '#ff8a65', '#ff7043',
+    '#9e9e9e', '#757575', '#616161', '#424242'
+];
+function randomFromPalette() {
+    return nicePalette[Math.floor(Math.random() * nicePalette.length)];
+}
+
+const boardForm = useForm({
+    name: null,
+    description: null,
+    color: randomFromPalette(),
+});
 
 const date = new Date();
 
@@ -355,8 +493,11 @@ const componentsStyle = reactive({
     newTaskForm: {
         visibility: 'hidden',
     },
+    newBoardForm: {
+        visibility: 'hidden',
+    },
     mainContainer: {
-        styleClasses: 'flex h-[calc(100vh-100px)] bg-red-300',
+        styleClasses: defaultMainContainerStyle,
     },
 });
 
@@ -369,13 +510,23 @@ function toggleDataSelectMenu() {
     componentsStyle.dateSelectorMenu.visibility = componentsStyle.dateSelectorMenu.visibility === 'visible' ? 'hidden' : 'visible';
 }
 
+function toggleCreateNewBoardForm() {
+    if (componentsStyle.newBoardForm.visibility === 'visible') {
+        componentsStyle.newBoardForm.visibility = 'hidden';
+        componentsStyle.mainContainer.styleClasses = defaultMainContainerStyle;
+    } else {
+        componentsStyle.newBoardForm.visibility = 'visible';
+        componentsStyle.mainContainer.styleClasses = blurMainContainerStyle;
+    }
+}
+
 function toggleCreateNewTaskForm() {
     if (componentsStyle.newTaskForm.visibility === 'visible') {
         componentsStyle.newTaskForm.visibility = 'hidden';
-        componentsStyle.mainContainer.styleClasses = 'flex h-[calc(100vh-100px)] bg-red-300';
+        componentsStyle.mainContainer.styleClasses = defaultMainContainerStyle;
     } else {
         componentsStyle.newTaskForm.visibility = 'visible';
-        componentsStyle.mainContainer.styleClasses = 'blur flex h-[calc(100vh-100px)] bg-red-300';
+        componentsStyle.mainContainer.styleClasses = blurMainContainerStyle;
     }
 }
 
@@ -414,6 +565,20 @@ function submitCreateTaskForm() {
             console.log('симс гууд');
 
             toggleCreateNewTaskForm();
+        },
+        onError: (errors) => {
+            console.log('errors: ', errors);
+        },
+    });
+}
+
+function submitCreateBoardForm() {
+    boardForm.post(route('boards.store'), {
+        onSuccess: () => {
+            console.log('доска создана');
+            boardForm.reset();
+            boardForm.color = randomFromPalette();
+            toggleCreateNewBoardForm();
         },
         onError: (errors) => {
             console.log('errors: ', errors);
